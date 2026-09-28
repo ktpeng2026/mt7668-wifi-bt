@@ -929,7 +929,7 @@ WLAN_STATUS kalRxIndicateOnePkt(IN P_GLUE_INFO_T prGlueInfo, IN PVOID pvPkt)
 	}
 
 	if (!in_interrupt())
-		netif_rx_ni(prSkb);	/* only in non-interrupt context */
+		netif_rx(prSkb);	/* only in non-interrupt context */
 	else
 		netif_rx(prSkb);
 
@@ -1068,8 +1068,10 @@ kalIndicateStatusAndComplete(IN P_GLUE_INFO_T prGlueInfo, IN WLAN_STATUS eStatus
 
 				#if KERNEL_VERSION(4, 14, 0) <= CFG80211_VERSION_CODE
 				memset(&roam_info, 0, sizeof(struct cfg80211_roam_info));
-				roam_info.channel = prChannel;
-				roam_info.bssid = arBssid;
+				//roam_info.channel = prChannel;
+				//roam_info.bssid = arBssid;
+				roam_info.links[0].channel = prChannel;
+				roam_info.links[0].bssid = arBssid;
 				roam_info.req_ie = prGlueInfo->aucReqIe;
 				roam_info.req_ie_len = prGlueInfo->u4ReqIeLength;
 				roam_info.resp_ie = prGlueInfo->aucRspIe;
@@ -4042,13 +4044,13 @@ UINT_8 kalGetRsnIeMfpCap(IN P_GLUE_INFO_T prGlueInfo)
 struct file *kalFileOpen(const char *path, int flags, int rights)
 {
 	struct file *filp = NULL;
-	mm_segment_t oldfs;
+	//mm_segment_t oldfs;
 	int err = 0;
 
-	oldfs = get_fs();
-	set_fs(KERNEL_DS);
+	//oldfs = get_fs();
+	//set_fs(KERNEL_DS);
 	filp = filp_open(path, flags, rights);
-	set_fs(oldfs);
+	//set_fs(oldfs);
 	if (IS_ERR(filp)) {
 		err = PTR_ERR(filp);
 		return NULL;
@@ -4063,29 +4065,29 @@ VOID kalFileClose(struct file *file)
 
 UINT_32 kalFileRead(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size)
 {
-	mm_segment_t oldfs;
+	//mm_segment_t oldfs;
 	int ret;
 
-	oldfs = get_fs();
-	set_fs(KERNEL_DS);
+	//oldfs = get_fs();
+	//set_fs(KERNEL_DS);
 
 	ret = kernel_read(file, data, size, &offset);
 
-	set_fs(oldfs);
+	//set_fs(oldfs);
 	return ret;
 }
 
 UINT_32 kalFileWrite(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size)
 {
-	mm_segment_t oldfs;
+	//mm_segment_t oldfs;
 	int ret;
 
-	oldfs = get_fs();
-	set_fs(KERNEL_DS);
+	//oldfs = get_fs();
+	//set_fs(KERNEL_DS);
 
 	ret = kernel_write(file, data, size, &offset);
 
-	set_fs(oldfs);
+	//set_fs(oldfs);
 	return ret;
 }
 
@@ -4845,7 +4847,7 @@ BOOLEAN kalMetCheckProfilingPacket(IN P_GLUE_INFO_T prGlueInfo, IN P_NATIVE_PACK
 }
 
 static unsigned long __read_mostly tracing_mark_write_addr;
-
+#if 0
 static int __mt_find_tracing_mark_write_symbol_fn(void *prData, const char *pcNameBuf,
 						   struct module *prModule, unsigned long ulAddress)
 {
@@ -4855,12 +4857,42 @@ static int __mt_find_tracing_mark_write_symbol_fn(void *prData, const char *pcNa
 	}
 	return 0;
 }
-
+#endif
+//static inline void __mt_update_tracing_mark_write_addr(void)
+//{
+//	if (unlikely(tracing_mark_write_addr == 0))
+//		kallsyms_on_each_symbol(__mt_find_tracing_mark_write_symbol_fn, NULL);
+//}
+#if 0
 static inline void __mt_update_tracing_mark_write_addr(void)
 {
-	if (unlikely(tracing_mark_write_addr == 0))
-		kallsyms_on_each_symbol(__mt_find_tracing_mark_write_symbol_fn, NULL);
+    if (unlikely(tracing_mark_write_addr == 0)) {
+        if (kallsyms_lookup_name_ptr) {
+            tracing_mark_write_addr = kallsyms_lookup_name_ptr("tracing_mark_write");
+            if (tracing_mark_write_addr) {
+                pr_info("MT7668: tracing_mark_write found at %px\n",
+                        (void *)tracing_mark_write_addr);
+            } else {
+                pr_warn("MT7668: tracing_mark_write symbol not found\n");
+            }
+        } else {
+            pr_warn("MT7668: kallsyms_lookup_name not available\n");
+        }
+    }
 }
+#endif
+static inline void __mt_update_tracing_mark_write_addr(void)
+{
+    if (unlikely(tracing_mark_write_addr == 0)) {
+        tracing_mark_write_addr = mt_kallsyms_lookup_name("tracing_mark_write");
+        if (tracing_mark_write_addr)
+            pr_info("MT7668: tracing_mark_write = %px\n",
+                    (void *)tracing_mark_write_addr);
+        else
+            pr_warn("MT7668: tracing_mark_write not found\n");
+    }
+}
+
 
 VOID kalMetTagPacket(IN P_GLUE_INFO_T prGlueInfo, IN P_NATIVE_PACKET prPacket, IN ENUM_TX_PROFILING_TAG_T eTag)
 {

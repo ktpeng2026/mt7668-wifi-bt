@@ -1880,7 +1880,7 @@ VOID TdlsCmdTestRxIndicatePkts(GLUE_INFO_T *prGlueInfo, struct sk_buff *prSkb)
 	prSkb->dev = prNetDev;
 
 	if (!in_interrupt())
-		netif_rx_ni(prSkb);	/* only in non-interrupt context */
+		netif_rx(prSkb);	/* only in non-interrupt context */
 	else
 		netif_rx(prSkb);
 }

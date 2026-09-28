@@ -866,7 +866,7 @@ int mtk_cfg80211_scan(struct wiphy *wiphy, struct cfg80211_scan_request *request
 			rScanRequest.arChnlInfoList[i].u4CenterFreq2 = 0;
 			rScanRequest.arChnlInfoList[i].u2PriChnlFreq = request->channels[i]->center_freq;
 #if KERNEL_VERSION(3, 12, 0) <= CFG80211_VERSION_CODE
-			rScanRequest.arChnlInfoList[i].ucChnlBw = request->scan_width;
+			rScanRequest.arChnlInfoList[i].ucChnlBw = 0;
 #else
 			rScanRequest.arChnlInfoList[i].ucChnlBw = 0;
 #endif
@@ -2693,10 +2693,6 @@ int
 mtk_cfg80211_change_station(struct wiphy *wiphy, struct net_device *ndev, const u8 *mac,
 			    struct station_parameters *params)
 {
-
-	/* return 0; */
-
-	/* from supplicant -- wpa_supplicant_tdls_peer_addset() */
 	P_GLUE_INFO_T prGlueInfo = NULL;
 	CMD_PEER_UPDATE_T rCmdUpdate;
 	WLAN_STATUS rStatus;
@@ -2707,40 +2703,34 @@ mtk_cfg80211_change_station(struct wiphy *wiphy, struct net_device *ndev, const 
 	prGlueInfo = (P_GLUE_INFO_T) wiphy_priv(wiphy);
 	ASSERT(prGlueInfo);
 
-	/* make up command */
-
 	prAdapter = prGlueInfo->prAdapter;
 	prAisBssInfo = prAdapter->prAisBssInfo;
 
 	if (params == NULL)
 		return 0;
-	else if (params->supported_rates == NULL)
+
+	struct link_station_parameters *link_sta_params = &params->link_sta_params;
+
+	if (link_sta_params->supported_rates == NULL)
 		return 0;
 
 	/* init */
 	kalMemZero(&rCmdUpdate, sizeof(rCmdUpdate));
 	kalMemCopy(rCmdUpdate.aucPeerMac, mac, 6);
 
-	if (params->supported_rates != NULL) {
-
-		u4Temp = params->supported_rates_len;
+	if (link_sta_params->supported_rates != NULL) {
+		u4Temp = link_sta_params->supported_rates_len;
 		if (u4Temp > CMD_PEER_UPDATE_SUP_RATE_MAX)
 			u4Temp = CMD_PEER_UPDATE_SUP_RATE_MAX;
-		kalMemCopy(rCmdUpdate.aucSupRate, params->supported_rates, u4Temp);
+		kalMemCopy(rCmdUpdate.aucSupRate, link_sta_params->supported_rates, u4Temp);
 		rCmdUpdate.u2SupRateLen = u4Temp;
 	}
 
-	/*
-	 * In supplicant, only recognize WLAN_EID_QOS 46, not 0xDD WMM
-	 * So force to support UAPSD here.
-	 */
-	rCmdUpdate.UapsdBitmap = 0x0F;	/*params->uapsd_queues; */
-	rCmdUpdate.UapsdMaxSp = 0;	/*params->max_sp; */
-
+	rCmdUpdate.UapsdBitmap = 0x0F;
+	rCmdUpdate.UapsdMaxSp = 0;
 	rCmdUpdate.u2Capability = params->capability;
 
 	if (params->ext_capab != NULL) {
-
 		u4Temp = params->ext_capab_len;
 		if (u4Temp > CMD_PEER_UPDATE_EXT_CAP_MAXLEN)
 			u4Temp = CMD_PEER_UPDATE_EXT_CAP_MAXLEN;
@@ -2748,51 +2738,43 @@ mtk_cfg80211_change_station(struct wiphy *wiphy, struct net_device *ndev, const 
 		rCmdUpdate.u2ExtCapLen = u4Temp;
 	}
 
-	if (params->ht_capa != NULL) {
-
-		rCmdUpdate.rHtCap.u2CapInfo = params->ht_capa->cap_info;
-		rCmdUpdate.rHtCap.ucAmpduParamsInfo = params->ht_capa->ampdu_params_info;
-		rCmdUpdate.rHtCap.u2ExtHtCapInfo = params->ht_capa->extended_ht_cap_info;
-		rCmdUpdate.rHtCap.u4TxBfCapInfo = params->ht_capa->tx_BF_cap_info;
-		rCmdUpdate.rHtCap.ucAntennaSelInfo = params->ht_capa->antenna_selection_info;
+	if (link_sta_params->ht_capa != NULL) {
+		rCmdUpdate.rHtCap.u2CapInfo = link_sta_params->ht_capa->cap_info;
+		rCmdUpdate.rHtCap.ucAmpduParamsInfo = link_sta_params->ht_capa->ampdu_params_info;
+		rCmdUpdate.rHtCap.u2ExtHtCapInfo = link_sta_params->ht_capa->extended_ht_cap_info;
+		rCmdUpdate.rHtCap.u4TxBfCapInfo = link_sta_params->ht_capa->tx_BF_cap_info;
+		rCmdUpdate.rHtCap.ucAntennaSelInfo = link_sta_params->ht_capa->antenna_selection_info;
 		kalMemCopy(rCmdUpdate.rHtCap.rMCS.arRxMask,
-			   params->ht_capa->mcs.rx_mask, sizeof(rCmdUpdate.rHtCap.rMCS.arRxMask));
-
-		rCmdUpdate.rHtCap.rMCS.u2RxHighest = params->ht_capa->mcs.rx_highest;
-		rCmdUpdate.rHtCap.rMCS.ucTxParams = params->ht_capa->mcs.tx_params;
+			   link_sta_params->ht_capa->mcs.rx_mask, sizeof(rCmdUpdate.rHtCap.rMCS.arRxMask));
+		rCmdUpdate.rHtCap.rMCS.u2RxHighest = link_sta_params->ht_capa->mcs.rx_highest;
+		rCmdUpdate.rHtCap.rMCS.ucTxParams = link_sta_params->ht_capa->mcs.tx_params;
 		rCmdUpdate.fgIsSupHt = TRUE;
 	}
-	/* vht */
 
-	if (params->vht_capa != NULL) {
-		/* rCmdUpdate.rVHtCap */
+	if (link_sta_params->vht_capa != NULL) {
 		/* rCmdUpdate.rVHtCap */
 	}
 
-	/* update a TDLS peer record */
-	/* sanity check */
 	if ((params->sta_flags_set & BIT(NL80211_STA_FLAG_TDLS_PEER)))
 		rCmdUpdate.eStaType = STA_TYPE_DLS_PEER;
-	rStatus = kalIoctl(prGlueInfo, cnmPeerUpdate, &rCmdUpdate, sizeof(CMD_PEER_UPDATE_T), FALSE, FALSE, FALSE,
-			   /* FALSE,    //6628 -> 6630  fgIsP2pOid-> x */
-			   &u4BufLen);
+
+	rStatus = kalIoctl(prGlueInfo, cnmPeerUpdate, &rCmdUpdate, sizeof(CMD_PEER_UPDATE_T),
+			   FALSE, FALSE, FALSE, &u4BufLen);
 
 	if (rStatus != WLAN_STATUS_SUCCESS)
 		return -EINVAL;
-	/* for Ch Sw AP prohibit case */
-	if (prAisBssInfo->fgTdlsIsChSwProhibited) {
-		/* disable TDLS ch sw function */
 
+	if (prAisBssInfo->fgTdlsIsChSwProhibited) {
 		rStatus = kalIoctl(prGlueInfo,
 				   TdlsSendChSwControlCmd,
-				   &TdlsSendChSwControlCmd, sizeof(CMD_TDLS_CH_SW_T), FALSE, FALSE, FALSE,
-				   /* FALSE,    //6628 -> 6630  fgIsP2pOid-> x */
-				   &u4BufLen);
+				   &TdlsSendChSwControlCmd, sizeof(CMD_TDLS_CH_SW_T),
+				   FALSE, FALSE, FALSE, &u4BufLen);
 	}
 
 	return 0;
 }
 #else
+
 int
 mtk_cfg80211_change_station(struct wiphy *wiphy, struct net_device *ndev, u8 *mac, struct station_parameters *params)
 {

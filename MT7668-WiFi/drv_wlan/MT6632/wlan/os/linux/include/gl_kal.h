@@ -808,7 +808,7 @@ do { \
 		(_Interval) += KAL_GET_TIME_INTERVAL(); \
 	}
 
-#define KAL_GET_HOST_CLOCK()		local_clock()
+#define KAL_GET_HOST_CLOCK()		ktime_get_boot_fast_ns()
 
 /*******************************************************************************
 *                  F U N C T I O N   D E C L A R A T I O N S

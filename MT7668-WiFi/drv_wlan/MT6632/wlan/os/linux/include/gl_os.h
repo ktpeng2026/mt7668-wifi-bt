@@ -1044,4 +1044,34 @@ VOID wlanUpdateChannelTable(P_GLUE_INFO_T prGlueInfo);
 int set_p2p_mode_handler(struct net_device *netdev, PARAM_CUSTOM_P2P_SET_STRUCT_T p2pmode);
 #endif
 
+#include <linux/kprobes.h>
+
+typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
+
+static inline unsigned long mt_kallsyms_lookup_name(const char *name)
+{
+    static kallsyms_lookup_name_t kallsyms_lookup_name_ptr = NULL;
+    static bool inited = false;
+
+    if (unlikely(!inited)) {
+        struct kprobe kp = {
+            .symbol_name = "kallsyms_lookup_name",
+        };
+
+        inited = true;
+        if (register_kprobe(&kp) == 0) {
+            kallsyms_lookup_name_ptr = (kallsyms_lookup_name_t)kp.addr;
+            unregister_kprobe(&kp);
+            pr_info("MT7668: kallsyms_lookup_name = %px\n", kallsyms_lookup_name_ptr);
+        } else {
+            pr_err("MT7668: kprobe for kallsyms_lookup_name failed\n");
+        }
+    }
+
+    if (kallsyms_lookup_name_ptr)
+        return kallsyms_lookup_name_ptr(name);
+    return 0;
+}
+
+
 #endif /* _GL_OS_H */

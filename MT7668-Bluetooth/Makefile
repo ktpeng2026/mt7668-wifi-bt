@@ -1,5 +1,6 @@
-KERNEL_SRC=/lib/modules/kernel_version/build
-ARCH=x86
+kernel_version=$(shell uname -r)
+KERNEL_SRC=/lib/modules/$(kernel_version)/build
+ARCH=arm64
 SDIO_MOD_NAME = bt_mt7668
 SDIO_CFILES := \
 	btmtk_sdio.c btmtk_main.c

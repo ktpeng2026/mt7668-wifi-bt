@@ -47,6 +47,10 @@
 #include <linux/of_irq.h>
 #endif
 
+#include <linux/ktime.h>
+#include <linux/timekeeping.h>
+
+
 #ifdef BT_SUPPORT_PMU_EN_CTRL
 #include "mt7668_wmt.h"
 #endif
@@ -134,7 +138,8 @@ int fw_dump_task_should_stop;
 u8 *fw_dump_ptr;
 u8 *fw_dump_read_ptr;
 u8 *fw_dump_write_ptr;
-struct timeval fw_dump_last_write_time;
+//struct timeval fw_dump_last_write_time;
+struct timespec64  fw_dump_last_write_time;
 int fw_dump_end_checking_task_should_stop;
 int fw_is_doing_coredump;
 int fw_is_coredump_end_packet;
@@ -2925,7 +2930,8 @@ static int btmtk_stereo_irq_handler(int irq, void *dev)
 {
 	/* Get sys clk */
 	struct timeval tv;
-	do_gettimeofday(&tv);
+	//do_gettimeofday(&tv);
+	ktime_get_real_ts64(&fw_dump_last_write_time);
 	stereo_clk.sys_clk = tv.tv_sec*1000000 + tv.tv_usec;
 	clk_flag = 0x01;
 	pr_debug("%s: tv_sec %d, tv_usec %d sys_clk %ld\n", __func__, tv.tv_sec, tv.tv_usec, stereo_clk.sys_clk);
@@ -3125,17 +3131,18 @@ static int btmtk_sdio_probe(struct sdio_func *func,
 
 	hdev->bus = HCI_SDIO;
 
-	if (id->class == SDIO_CLASS_BT_AMP)
-		hdev->dev_type = HCI_AMP;
-	else
+	//if (id->class == SDIO_CLASS_BT_AMP)
+		//hdev->dev_type = HCI_AMP;
+	//else
 
 #if KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE
-		hdev->dev_type = HCI_BREDR;
+	//	hdev->dev_type = HCI_BREDR;
 #else
-		hdev->dev_type = HCI_PRIMARY;
+		//hdev->dev_type = HCI_PRIMARY;
 #endif
 
 	SET_HCIDEV_DEV(hdev, &func->dev);
+	//SET_HCIDEV_DEV(&func->dev);
 
 	hdev->open     = btsdio_open;
 	hdev->close    = btsdio_close;
@@ -4624,7 +4631,7 @@ static int BTMTK_init(void)
 	pr_info("%s driver(major %d) installed.\n",
 			"BT_chrdevfwlog", BT_majorfwlog);
 
-	pBTClass = class_create(THIS_MODULE, "BT_chrdev");
+	pBTClass = class_create("BT_chrdev");
 	if (IS_ERR(pBTClass)) {
 		pr_err("class create fail, error code(%ld)\n",
 			PTR_ERR(pBTClass));

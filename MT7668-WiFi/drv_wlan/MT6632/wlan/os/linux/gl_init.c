@@ -110,7 +110,7 @@ typedef struct _WLANDEV_INFO_T {
 
 MODULE_AUTHOR(NIC_AUTHOR);
 MODULE_DESCRIPTION(NIC_DESC);
-MODULE_SUPPORTED_DEVICE(NIC_NAME);
+// MODULE_SUPPORTED_DEVICE(NIC_NAME);
 
 /* MODULE_LICENSE("MTK Propietary"); */
 MODULE_LICENSE("Dual BSD/GPL");
@@ -369,7 +369,7 @@ static struct cfg80211_ops mtk_wlan_ops = {
 	.cancel_remain_on_channel = mtk_cfg80211_cancel_remain_on_channel,
 	.mgmt_tx = mtk_cfg80211_mgmt_tx,
 	/* .mgmt_tx_cancel_wait        = mtk_cfg80211_mgmt_tx_cancel_wait, */
-	.mgmt_frame_register = mtk_cfg80211_mgmt_frame_register,
+	// .mgmt_frame_register = mtk_cfg80211_mgmt_frame_register,
 
 #ifdef CONFIG_NL80211_TESTMODE
 	.testmode_cmd = mtk_cfg80211_testmode_cmd,
@@ -2227,9 +2227,9 @@ label_exit:
 static void nicTxDirectTimerCheckSkbQWrapper(struct timer_list *timer)
 {
 	P_ADAPTER_T prAdapter =
-		container_of(timer, ADAPTER_T, rTxDirectSkbTimer);
+		container_of((void *)timer, ADAPTER_T, rTxDirectSkbTimer);
 	P_GLUE_INFO_T prGlueInfo =
-		container_of(prAdapter, GLUE_INFO_T, prAdapter);
+		container_of((void *)prAdapter, GLUE_INFO_T, prAdapter);
 
 	nicTxDirectTimerCheckSkbQ((unsigned long) prGlueInfo);
 }
@@ -2238,9 +2238,9 @@ static void nicTxDirectTimerCheckSkbQWrapper(struct timer_list *timer)
 static void nicTxDirectTimerCheckHifQWrapper(struct timer_list *timer)
 {
 	P_ADAPTER_T prAdapter =
-		container_of(timer, ADAPTER_T, rTxDirectHifTimer);
+		container_of((void *)timer, ADAPTER_T, rTxDirectHifTimer);
 	P_GLUE_INFO_T prGlueInfo =
-		container_of(prAdapter, GLUE_INFO_T, prAdapter);
+		container_of((void *)prAdapter, GLUE_INFO_T, prAdapter);
 
 	nicTxDirectTimerCheckHifQ((unsigned long) prGlueInfo);
 }
