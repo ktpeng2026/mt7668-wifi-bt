@@ -1399,6 +1399,33 @@ BOOL kalDevWriteWithSdioCmd52(IN P_GLUE_INFO_T prGlueInfo, IN UINT_32 u4Addr, IN
 
 }				/* end of kalDevWriteWithSdioCmd52() */
 
+BOOL kalDevReadAfterWriteWithSdioCmd52(IN P_GLUE_INFO_T prGlueInfo,
+	IN UINT_32 u4Addr, IN OUT PUINT_8 pucData, IN UINT_32 u4Func)
+{
+	int ret = 0;
+	struct sdio_func *func;
+
+	if (!prGlueInfo || !pucData)
+		return FALSE;
+
+	func = prGlueInfo->rHifInfo.func;
+	if (!func || u4Func != 1)
+		return FALSE;
+
+	sdio_claim_host(func);
+	sdio_writeb(func, *pucData, u4Addr, &ret);
+	if (!ret)
+		*pucData = sdio_readb(func, u4Addr, &ret);
+	sdio_release_host(func);
+
+	if (ret)
+		DBGLOG(HAL, ERROR,
+		       "CMD52 write/read failed addr=0x%lx ret=%d\n",
+		       u4Addr, ret);
+
+	return ret ? FALSE : TRUE;
+}
+
 VOID glSetPowerState(IN P_GLUE_INFO_T prGlueInfo, IN UINT_32 ePowerMode)
 {
 }
@@ -1615,4 +1642,3 @@ BOOLEAN glWakeupSdio(P_GLUE_INFO_T prGlueInfo)
 
 	return fgSuccess;
 }
-

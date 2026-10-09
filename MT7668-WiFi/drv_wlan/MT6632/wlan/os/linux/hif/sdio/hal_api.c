@@ -397,12 +397,14 @@ BOOLEAN halSetDriverOwn(IN P_ADAPTER_T prAdapter)
 		}
 
 #if 1
-		if (i == 0) {
+		if ((i & (LP_OWN_BACK_CLR_OWN_ITERATION - 1)) == 0) {
 			/* Software get LP ownership - only one time.
 			 * Suppose one CLR_LP_OWN will trigger firmware to return the hif_own.
 			 * If not, there is something wrong in chipset.
 			 */
-			HAL_LP_OWN_CLR(prAdapter, &fgResult);
+			HAL_DRIVER_OWN_BY_SDIO_CMD52(prAdapter, &fgResult);
+			if (!fgResult)
+				HAL_LP_OWN_CLR(prAdapter, &fgResult);
 		}
 #else
 		if ((i & (LP_OWN_BACK_CLR_OWN_ITERATION - 1)) == 0) {
@@ -2210,5 +2212,4 @@ VOID halTxResourceResetHwTQCounter(IN P_ADAPTER_T prAdapter)
         if (pu4WHISR)
                 kalMemFree(pu4WHISR, PHY_MEM_TYPE, sizeof(UINT_32));
 }
-
 

@@ -305,6 +305,9 @@ void glGetHifDev(P_GL_HIF_INFO_T prHif, struct device **dev);
 
 BOOLEAN glWakeupSdio(P_GLUE_INFO_T prGlueInfo);
 
+BOOL kalDevReadAfterWriteWithSdioCmd52(IN P_GLUE_INFO_T prGlueInfo,
+	IN UINT_32 u4Addr, IN OUT PUINT_8 pucData, IN UINT_32 u4Func);
+
 #if !CFG_SDIO_INTR_ENHANCE
 VOID halRxSDIOReceiveRFBs(IN P_ADAPTER_T prAdapter);
 

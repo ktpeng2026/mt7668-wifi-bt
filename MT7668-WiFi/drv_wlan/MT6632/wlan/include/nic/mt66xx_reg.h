@@ -674,6 +674,7 @@ typedef union _DELAY_INT_CFG_STRUCT {
 
 /* 4 HIF Low Power Control  Register */
 #define MCR_WHLPCR                          0x0004
+#define MCR_WHLPCR_BYTE1                    (MCR_WHLPCR + 1)
 
 /* 4 Control  Status Register */
 #define MCR_WSDIOCSR                        0x0008
