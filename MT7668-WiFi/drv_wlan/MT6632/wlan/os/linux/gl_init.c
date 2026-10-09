@@ -536,7 +536,13 @@ unsigned int _cfg80211_classify8021d(struct sk_buff *skb)
 }
 #endif
 
-#if KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE
+#if KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE
+u16 wlanSelectQueue(struct net_device *dev, struct sk_buff *skb,
+		struct net_device *sb_dev)
+{
+	return mtk_wlan_ndev_select_queue(skb);
+}
+#elif KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE
 u16 wlanSelectQueue(struct net_device *dev, struct sk_buff *skb,
 		struct net_device *nd, select_queue_fallback_t fallback)
 {
@@ -2774,8 +2780,8 @@ static VOID wlanRemove(VOID)
 
 	if (HAL_IS_TX_DIRECT(prAdapter)) {
 		if (prAdapter->fgTxDirectInited) {
-			del_timer_sync(&prAdapter->rTxDirectSkbTimer);
-			del_timer_sync(&prAdapter->rTxDirectHifTimer);
+			timer_delete_sync(&prAdapter->rTxDirectSkbTimer);
+			timer_delete_sync(&prAdapter->rTxDirectHifTimer);
 		}
 	}
 

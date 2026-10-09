@@ -175,20 +175,32 @@ mtk_cfg80211_change_iface(struct wiphy *wiphy,
 int
 mtk_cfg80211_add_key(struct wiphy *wiphy,
 		     struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+		     int link_id,
+#endif
 		     u8 key_index, bool pairwise, const u8 *mac_addr, struct key_params *params);
 
 int
 mtk_cfg80211_get_key(struct wiphy *wiphy,
 		     struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+		     int link_id,
+#endif
 		     u8 key_index,
 		     bool pairwise,
 		     const u8 *mac_addr, void *cookie, void (*callback) (void *cookie, struct key_params *));
 
-int
-mtk_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev, u8 key_index, bool pairwise, const u8 *mac_addr);
+int mtk_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+			 int link_id,
+#endif
+			 u8 key_index, bool pairwise, const u8 *mac_addr);
 
-int
-mtk_cfg80211_set_default_key(struct wiphy *wiphy, struct net_device *ndev, u8 key_index, bool unicast, bool multicast);
+int mtk_cfg80211_set_default_key(struct wiphy *wiphy, struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+				 int link_id,
+#endif
+				 u8 key_index, bool unicast, bool multicast);
 
 #if KERNEL_VERSION(3, 16, 0) <= CFG80211_VERSION_CODE
 int mtk_cfg80211_get_station(struct wiphy *wiphy, struct net_device *ndev, const u8 *mac, struct station_info *sinfo);
@@ -297,7 +309,11 @@ int mtk_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev,
 #endif
 #if KERNEL_VERSION(3, 18, 0) <= CFG80211_VERSION_CODE
 int mtk_cfg80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
-			   const u8 *peer, u8 action_code, u8 dialog_token,
+			   const u8 *peer,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+			   int link_id,
+#endif
+			   u8 action_code, u8 dialog_token,
 			   u16 status_code, u32 peer_capability,
 			   bool initiator, const u8 *buf, size_t len);
 #else

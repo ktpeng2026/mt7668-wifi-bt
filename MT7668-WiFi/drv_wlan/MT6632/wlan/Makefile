@@ -17,7 +17,10 @@ ccflags-y += -DWLAN_INCLUDE_PROC
 ccflags-y += -DCFG_ANDROID_AOSP_PRIV_CMD
 ccflags-y += -DCFG_SUPPORT_AGPS_ASSIST=1
 ccflags-y += -DCFG_SUPPORT_TSF_USING_BOOTTIME=1
-ccflags-y += -Werror
+# This vendor driver predates many warnings enabled by modern kernels.  Keep
+# warnings visible, but do not turn unrelated legacy warnings into build
+# failures while porting across kernel releases.
+ccflags-$(CONFIG_MTK_WLAN_WERROR) += -Werror
 ccflags-y:=$(filter-out -U$(WLAN_CHIP_ID),$(ccflags-y))
 ccflags-y += -DLINUX -D$(WLAN_CHIP_ID)
 

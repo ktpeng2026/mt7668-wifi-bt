@@ -125,6 +125,96 @@ struct wireless_dev *gprP2pRoleWdev[KAL_P2P_NUM];
 struct net_device *gPrP2pDev[KAL_P2P_NUM];
 
 #if CFG_ENABLE_WIFI_DIRECT_CFG_80211
+#if KERNEL_VERSION(6, 18, 0) <= CFG80211_VERSION_CODE
+static int mtk_p2p_change_beacon_compat(struct wiphy *wiphy,
+		struct net_device *dev, struct cfg80211_ap_update *info)
+{
+	return mtk_p2p_cfg80211_change_beacon(wiphy, dev, &info->beacon);
+}
+
+static int mtk_p2p_stop_ap_compat(struct wiphy *wiphy,
+		struct net_device *dev, unsigned int link_id)
+{
+	return mtk_p2p_cfg80211_stop_ap(wiphy, dev);
+}
+
+static int mtk_p2p_set_wiphy_params_compat(struct wiphy *wiphy,
+		int radio_idx, u32 changed)
+{
+	return mtk_p2p_cfg80211_set_wiphy_params(wiphy, changed);
+}
+
+static int mtk_p2p_set_bitrate_mask_compat(struct wiphy *wiphy,
+		struct net_device *dev, unsigned int link_id, const u8 *peer,
+		const struct cfg80211_bitrate_mask *mask)
+{
+	return mtk_p2p_cfg80211_set_bitrate_mask(wiphy, dev, peer, mask);
+}
+
+static int mtk_p2p_add_key_compat(struct wiphy *wiphy,
+		struct net_device *dev, int link_id, u8 key_index, bool pairwise,
+		const u8 *mac_addr, struct key_params *params)
+{
+	return mtk_p2p_cfg80211_add_key(wiphy, dev, key_index, pairwise,
+			mac_addr, params);
+}
+
+static int mtk_p2p_get_key_compat(struct wiphy *wiphy,
+		struct net_device *dev, int link_id, u8 key_index, bool pairwise,
+		const u8 *mac_addr, void *cookie,
+		void (*callback)(void *cookie, struct key_params *params))
+{
+	return mtk_p2p_cfg80211_get_key(wiphy, dev, key_index, pairwise,
+			mac_addr, cookie, callback);
+}
+
+static int mtk_p2p_del_key_compat(struct wiphy *wiphy,
+		struct net_device *dev, int link_id, u8 key_index, bool pairwise,
+		const u8 *mac_addr)
+{
+	return mtk_p2p_cfg80211_del_key(wiphy, dev, key_index, pairwise,
+			mac_addr);
+}
+
+static int mtk_p2p_set_default_key_compat(struct wiphy *wiphy,
+		struct net_device *dev, int link_id, u8 key_index, bool unicast,
+		bool multicast)
+{
+	return mtk_p2p_cfg80211_set_default_key(wiphy, dev, key_index,
+			unicast, multicast);
+}
+
+static int mtk_p2p_set_mgmt_key_compat(struct wiphy *wiphy,
+		struct net_device *dev, int link_id, u8 key_index)
+{
+	return mtk_p2p_cfg80211_set_mgmt_key(wiphy, dev, key_index);
+}
+
+static int mtk_p2p_set_txpower_compat(struct wiphy *wiphy,
+		struct wireless_dev *wdev, int link_id,
+		enum nl80211_tx_power_setting type, int mbm)
+{
+	return mtk_p2p_cfg80211_set_txpower(wiphy, wdev, type, mbm);
+}
+
+static int mtk_p2p_get_txpower_compat(struct wiphy *wiphy,
+		struct wireless_dev *wdev, int link_id, unsigned int radio_idx,
+		int *dbm)
+{
+	return mtk_p2p_cfg80211_get_txpower(wiphy, wdev, dbm);
+}
+
+#if (CFG_SUPPORT_DFS_MASTER == 1)
+static int mtk_p2p_start_radar_detection_compat(struct wiphy *wiphy,
+		struct net_device *dev, struct cfg80211_chan_def *chandef,
+		u32 cac_time_ms, int link_id)
+{
+	return mtk_p2p_cfg80211_start_radar_detection(wiphy, dev, chandef,
+			cac_time_ms);
+}
+#endif
+#endif
+
 static struct cfg80211_ops mtk_p2p_ops = {
 #if (CFG_ENABLE_WIFI_DIRECT_CFG_80211 != 0)
 	/* Froyo */
@@ -142,25 +232,25 @@ static struct cfg80211_ops mtk_p2p_ops = {
 	.deauth = mtk_p2p_cfg80211_deauth,
 	.disassoc = mtk_p2p_cfg80211_disassoc,
 	.start_ap = mtk_p2p_cfg80211_start_ap,
-	.change_beacon = mtk_p2p_cfg80211_change_beacon,
-	.stop_ap = mtk_p2p_cfg80211_stop_ap,
-	.set_wiphy_params = mtk_p2p_cfg80211_set_wiphy_params,
+	.change_beacon = mtk_p2p_change_beacon_compat,
+	.stop_ap = mtk_p2p_stop_ap_compat,
+	.set_wiphy_params = mtk_p2p_set_wiphy_params_compat,
 	.del_station = mtk_p2p_cfg80211_del_station,
-	.set_bitrate_mask = mtk_p2p_cfg80211_set_bitrate_mask,
+	.set_bitrate_mask = mtk_p2p_set_bitrate_mask_compat,
 	// .mgmt_frame_register = mtk_p2p_cfg80211_mgmt_frame_register,
 	.get_station = mtk_p2p_cfg80211_get_station,
-	.add_key = mtk_p2p_cfg80211_add_key,
-	.get_key = mtk_p2p_cfg80211_get_key,
-	.del_key = mtk_p2p_cfg80211_del_key,
-	.set_default_key = mtk_p2p_cfg80211_set_default_key,
-	.set_default_mgmt_key = mtk_p2p_cfg80211_set_mgmt_key,
+	.add_key = mtk_p2p_add_key_compat,
+	.get_key = mtk_p2p_get_key_compat,
+	.del_key = mtk_p2p_del_key_compat,
+	.set_default_key = mtk_p2p_set_default_key_compat,
+	.set_default_mgmt_key = mtk_p2p_set_mgmt_key_compat,
 	.join_ibss = mtk_p2p_cfg80211_join_ibss,
 	.leave_ibss = mtk_p2p_cfg80211_leave_ibss,
-	.set_tx_power = mtk_p2p_cfg80211_set_txpower,
-	.get_tx_power = mtk_p2p_cfg80211_get_txpower,
+	.set_tx_power = mtk_p2p_set_txpower_compat,
+	.get_tx_power = mtk_p2p_get_txpower_compat,
 	.set_power_mgmt = mtk_p2p_cfg80211_set_power_mgmt,
 #if (CFG_SUPPORT_DFS_MASTER == 1)
-	.start_radar_detection = mtk_p2p_cfg80211_start_radar_detection,
+	.start_radar_detection = mtk_p2p_start_radar_detection_compat,
 #if KERNEL_VERSION(3, 13, 0) <= CFG80211_VERSION_CODE
 	.channel_switch = mtk_p2p_cfg80211_channel_switch,
 #endif
@@ -1843,4 +1933,3 @@ mtk_p2p_wext_get_priv(IN struct net_device *prDev,
 
 	return 0;
 }				/* end of mtk_p2p_wext_get_priv() */
-

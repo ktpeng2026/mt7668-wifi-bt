@@ -185,6 +185,9 @@ mtk_cfg80211_change_iface(struct wiphy *wiphy,
 int
 mtk_cfg80211_add_key(struct wiphy *wiphy,
 		     struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+		     int link_id,
+#endif
 		     u8 key_index, bool pairwise, const u8 *mac_addr, struct key_params *params)
 {
 	PARAM_KEY_T rKey;
@@ -201,6 +204,9 @@ mtk_cfg80211_add_key(struct wiphy *wiphy,
 #endif
 
 	const UINT_8 aucBCAddr[] = BC_MAC_ADDR;
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+	(void)link_id;
+#endif
 	/* const UINT_8 aucZeroMacAddr[] = NULL_MAC_ADDR; */
 
 	prGlueInfo = (P_GLUE_INFO_T) wiphy_priv(wiphy);
@@ -343,12 +349,18 @@ mtk_cfg80211_add_key(struct wiphy *wiphy,
 int
 mtk_cfg80211_get_key(struct wiphy *wiphy,
 		     struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+		     int link_id,
+#endif
 		     u8 key_index,
 		     bool pairwise,
 		     const u8 *mac_addr, void *cookie, void (*callback) (void *cookie, struct key_params *)
 )
 {
 	P_GLUE_INFO_T prGlueInfo = NULL;
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+	(void)link_id;
+#endif
 
 	prGlueInfo = (P_GLUE_INFO_T) wiphy_priv(wiphy);
 	ASSERT(prGlueInfo);
@@ -372,13 +384,20 @@ mtk_cfg80211_get_key(struct wiphy *wiphy,
  *         others:  failure
  */
 /*----------------------------------------------------------------------------*/
-int mtk_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev, u8 key_index, bool pairwise, const u8 *mac_addr)
+int mtk_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+			 int link_id,
+#endif
+			 u8 key_index, bool pairwise, const u8 *mac_addr)
 {
 	P_GLUE_INFO_T prGlueInfo = NULL;
 	WLAN_STATUS rStatus = WLAN_STATUS_SUCCESS;
 	PARAM_REMOVE_KEY_T rRemoveKey;
 	UINT_32 u4BufLen = 0;
 	INT_32 i4Rslt = -EINVAL;
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+	(void)link_id;
+#endif
 
 	prGlueInfo = (P_GLUE_INFO_T) wiphy_priv(wiphy);
 	ASSERT(prGlueInfo);
@@ -430,7 +449,11 @@ int mtk_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev, u8 key_in
  */
 /*----------------------------------------------------------------------------*/
 int
-mtk_cfg80211_set_default_key(struct wiphy *wiphy, struct net_device *ndev, u8 key_index, bool unicast, bool multicast)
+mtk_cfg80211_set_default_key(struct wiphy *wiphy, struct net_device *ndev,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+			     int link_id,
+#endif
+			     u8 key_index, bool unicast, bool multicast)
 {
 	P_GLUE_INFO_T prGlueInfo = NULL;
 	PARAM_DEFAULT_KEY_T rDefaultKey;
@@ -438,6 +461,9 @@ mtk_cfg80211_set_default_key(struct wiphy *wiphy, struct net_device *ndev, u8 ke
 	INT_32 i4Rst = -EINVAL;
 	UINT_32 u4BufLen = 0;
 	BOOLEAN fgDef = FALSE, fgMgtDef = FALSE;
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+	(void)link_id;
+#endif
 
 	prGlueInfo = (P_GLUE_INFO_T) wiphy_priv(wiphy);
 	ASSERT(prGlueInfo);
@@ -3079,13 +3105,20 @@ int mtk_cfg80211_del_station(struct wiphy *wiphy, struct net_device *ndev, u8 *m
 #if KERNEL_VERSION(3, 18, 0) <= CFG80211_VERSION_CODE
 int
 mtk_cfg80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
-		       const u8 *peer, u8 action_code, u8 dialog_token,
+		       const u8 *peer,
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+		       int link_id,
+#endif
+		       u8 action_code, u8 dialog_token,
 		       u16 status_code, u32 peer_capability,
 		       bool initiator, const u8 *buf, size_t len)
 {
 	GLUE_INFO_T *prGlueInfo;
 	TDLS_CMD_LINK_MGT_T rCmdMgt;
 	UINT_32 u4BufLen;
+#if KERNEL_VERSION(6, 1, 0) <= CFG80211_VERSION_CODE
+	(void)link_id;
+#endif
 
 	/* sanity check */
 	if ((wiphy == NULL) || (peer == NULL) || (buf == NULL))
@@ -3593,4 +3626,3 @@ int mtk_cfg80211_suspend(struct wiphy *wiphy, struct cfg80211_wowlan *wow)
 	}
 	return 0;
 }
-

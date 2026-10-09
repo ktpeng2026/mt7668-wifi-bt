@@ -3536,7 +3536,7 @@ BOOLEAN kalSetTimer(IN P_GLUE_INFO_T prGlueInfo, IN UINT_32 u4Interval)
 	if (HAL_IS_RX_DIRECT(prGlueInfo->prAdapter)) {
 		mod_timer(&prGlueInfo->tickfn, jiffies + u4Interval * HZ / MSEC_PER_SEC);
 	} else {
-		del_timer_sync(&(prGlueInfo->tickfn));
+		timer_delete_sync(&(prGlueInfo->tickfn));
 
 		prGlueInfo->tickfn.expires = jiffies + u4Interval * HZ / MSEC_PER_SEC;
 		add_timer(&(prGlueInfo->tickfn));
@@ -3561,7 +3561,7 @@ BOOLEAN kalCancelTimer(IN P_GLUE_INFO_T prGlueInfo)
 
 	clear_bit(GLUE_FLAG_TIMEOUT_BIT, &prGlueInfo->ulFlag);
 
-	if (del_timer_sync(&(prGlueInfo->tickfn)) >= 0)
+	if (timer_delete_sync(&(prGlueInfo->tickfn)) >= 0)
 		return TRUE;
 	else
 		return FALSE;
@@ -5023,12 +5023,12 @@ const struct file_operations rMetProcFops = {
 	.write = kalMetWriteProcfs
 };
 #endif
-const struct file_operations rMetProcCtrlFops = {
-	.write = kalMetCtrlWriteProcfs
+const struct proc_ops rMetProcCtrlFops = {
+	.proc_write = kalMetCtrlWriteProcfs
 };
 
-const struct file_operations rMetProcPortFops = {
-	.write = kalMetPortWriteProcfs
+const struct proc_ops rMetProcPortFops = {
+	.proc_write = kalMetPortWriteProcfs
 };
 
 int kalMetInitProcfs(IN P_GLUE_INFO_T prGlueInfo)
