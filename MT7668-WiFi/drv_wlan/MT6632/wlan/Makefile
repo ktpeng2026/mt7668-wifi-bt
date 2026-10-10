@@ -156,8 +156,7 @@ CHIPS       := chips/
 
 COMMON_OBJS :=	$(COMMON_DIR)dump.o \
 	       		$(COMMON_DIR)wlan_lib.o \
-	       		$(COMMON_DIR)wlan_oid.o \
-	       		$(COMMON_DIR)wlan_bow.o
+	       		$(COMMON_DIR)wlan_oid.o
 
 NIC_OBJS := $(NIC_DIR)nic.o \
 			$(NIC_DIR)nic_tx.o \
@@ -171,7 +170,6 @@ NIC_OBJS := $(NIC_DIR)nic.o \
 
 OS_OBJS :=	$(OS_DIR)gl_init.o \
 			$(OS_DIR)gl_kal.o  \
-			$(OS_DIR)gl_bow.o \
 			$(OS_DIR)gl_wext.o \
 			$(OS_DIR)gl_wext_priv.o \
 			$(OS_DIR)gl_ate_agent.o \

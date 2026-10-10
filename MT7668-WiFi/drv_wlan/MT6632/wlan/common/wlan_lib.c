@@ -2792,7 +2792,8 @@ WLAN_STATUS wlanPatchSendSemaControl(IN P_ADAPTER_T prAdapter, OUT PUINT_8 pucSe
 	*pucSeqNum = prInitHifTxHeader->rInitWifiCmd.ucSeqNum;
 
 	/* 3. Setup DOWNLOAD_BUF */
-	prPatchSemaControl = (P_INIT_CMD_PATCH_SEMA_CONTROL) prInitHifTxHeader->rInitWifiCmd.aucBuffer;
+	prPatchSemaControl = (P_INIT_CMD_PATCH_SEMA_CONTROL)
+		((PUINT_8)prInitHifTxHeader + sizeof(*prInitHifTxHeader));
 	kalMemZero(prPatchSemaControl, sizeof(INIT_CMD_PATCH_SEMA_CONTROL));
 	prPatchSemaControl->ucGetSemaphore = PATCH_GET_SEMA_CONTROL;
 

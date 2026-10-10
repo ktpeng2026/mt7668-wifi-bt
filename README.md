@@ -67,3 +67,14 @@ make -C MT7668-Bluetooth \
     CROSS_COMPILE= \
     -j"$(nproc)"
 
+
+make -C MT7668-WiFi -f Makefile.Arm64 \
+    KERNEL_SRC=/lib/modules/"$(uname -r)"/build \
+    ARCH=arm64 \
+    -j"$(nproc)" clean
+
+make -C MT7668-Bluetooth \
+    KERNEL_SRC=/lib/modules/"$(uname -r)"/build \
+    ARCH=arm64 \
+    -j"$(nproc)" clean
+

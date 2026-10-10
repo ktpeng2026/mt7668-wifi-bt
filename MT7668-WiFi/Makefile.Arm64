@@ -1,6 +1,7 @@
 KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 ARCH ?= arm64
 CROSS_COMPILE ?= aarch64-linux-gnu-
+JOBS ?= 1
 
 export CONFIG_MTK_COMBO_PLATFORM=arm64
 export MTK_COMBO_CHIP=MT6632
@@ -50,7 +51,8 @@ all: driver common
 
 driver: common
 	+$(MAKE) -C $(KERNEL_SRC) M=$(DRIVER_DIR) ARCH=$(ARCH) \
-		CROSS_COMPILE=$(CROSS_COMPILE) PLATFORM_FLAGS="$(PLATFORM_FLAGS)" modules
+		CROSS_COMPILE=$(CROSS_COMPILE) PLATFORM_FLAGS="$(PLATFORM_FLAGS)" \
+		-j$(JOBS) modules
 	@cd $(DRIVER_DIR) && cp $(MODULES_NAME)_$(hif).ko $(MODULES_NAME).ko
 #	@cat $(DRIVER_DIR)/Module.symvers >> $(LINUX_SRC)/Module.symvers
 
