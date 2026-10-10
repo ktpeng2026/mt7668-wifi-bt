@@ -211,6 +211,7 @@ struct _PATCH_HEADER {
 
 /*common register address*/
 #define CHLPCR 0x0004
+#define CHLPCR_BYTE1 (CHLPCR + 1)
 #define CSDIOCSR 0x0008
 #define CHCR   0x000C
 #define CHISR  0x0010
@@ -363,4 +364,3 @@ static inline int is_support_unify_woble(struct btmtk_sdio_card *data)
 
 
 #endif
-

@@ -592,6 +592,32 @@ static int btmtk_sdio_writel(u32 offset, u32 val)
 	return ret;
 }
 
+static int btmtk_sdio_write_own_cmd52(int owntype, u8 *status)
+{
+	int ret = 0;
+	u8 value;
+
+	if (!g_card || !g_card->func)
+		return -EIO;
+
+	value = owntype == DRIVER_OWN ? BIT(1) : BIT(0);
+
+	sdio_claim_host(g_card->func);
+	sdio_writeb(g_card->func, value, CHLPCR_BYTE1, &ret);
+	if (!ret && status)
+		*status = sdio_readb(g_card->func, CHLPCR_BYTE1, &ret);
+	sdio_release_host(g_card->func);
+
+	if (ret)
+		pr_err("%s CMD52 failed type=%d addr=0x%x ret=%d\n",
+		       __func__, owntype, CHLPCR_BYTE1, ret);
+	else if (status)
+		pr_info("%s type=%d CHLPCR_BYTE1=0x%02x\n",
+			__func__, owntype, *status);
+
+	return ret;
+}
+
 static int btmtk_sdio_readl(u32 offset,  u32 *val)
 {
 	u32 ret = 0;
@@ -623,6 +649,7 @@ static int btmtk_sdio_set_own_back(int owntype)
 	u32 u32ReadCRValue = 0;
 	u32 ownValue = 0;
 	u32 set_checkretry = 30;
+	u8 cmd52Status = 0;
 
 	pr_debug("%s owntype %d\n", __func__, owntype);
 
@@ -661,9 +688,14 @@ setretry:
 		ownValue = 0x00000100;
 
 	pr_debug("%s write CHLPCR 0x%x\n", __func__, ownValue);
-	ret = btmtk_sdio_writel(CHLPCR, ownValue);
+	ret = btmtk_sdio_write_own_cmd52(owntype, &cmd52Status);
 	if (ret) {
-		ret = -EINVAL;
+		pr_warn("%s CMD52 own request failed, fallback to CMD53\n",
+			__func__);
+		ret = btmtk_sdio_writel(CHLPCR, ownValue);
+	}
+	if (ret) {
+		ret = -EIO;
 		goto done;
 	}
 	pr_debug("%s write CHLPCR 0x%x done\n", __func__, ownValue);
