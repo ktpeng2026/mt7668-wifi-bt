@@ -2326,7 +2326,8 @@ static INT_32 wlanProbe(PVOID pvData, PVOID pvDriverData)
 		i4Status = glBusSetIrq(prWdev->netdev, NULL, prGlueInfo);
 
 		if (i4Status != WLAN_STATUS_SUCCESS) {
-			DBGLOG(INIT, ERROR, "wlanProbe: Set IRQ error\n");
+			pr_err("wlan: wlanProbe Set IRQ failed ret=%d\n",
+			       i4Status);
 			return -1;//fix wifi hang system when reboot
 		}
 
