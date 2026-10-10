@@ -795,9 +795,21 @@ INT_32 glBusSetIrq(PVOID pvData, PVOID pfnIsr, PVOID pvCookie)
 	prHifInfo = &prGlueInfo->rHifInfo;
 
 #if (MTK_WCN_HIF_SDIO == 0)
+	DBGLOG(HAL, INFO,
+	       "claim SDIO IRQ func=%d existing_handler=%ps host=%s\n",
+	       prHifInfo->func->num, prHifInfo->func->irq_handler,
+	       mmc_hostname(prHifInfo->func->card->host));
 	sdio_claim_host(prHifInfo->func);
 	ret = sdio_claim_irq(prHifInfo->func, mtk_sdio_interrupt);
 	sdio_release_host(prHifInfo->func);
+	if (ret)
+		DBGLOG(HAL, ERROR,
+		       "sdio_claim_irq failed func=%d ret=%d existing_handler=%ps\n",
+		       prHifInfo->func->num, ret,
+		       prHifInfo->func->irq_handler);
+	else
+		DBGLOG(HAL, INFO, "sdio_claim_irq success func=%d\n",
+		       prHifInfo->func->num);
 #else
 	mtk_wcn_hif_sdio_enable_irq(prHifInfo->cltCtx, TRUE);
 #endif
