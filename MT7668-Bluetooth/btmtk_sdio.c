@@ -689,8 +689,9 @@ setretry:
 
 	pr_debug("%s write CHLPCR 0x%x\n", __func__, ownValue);
 	ret = btmtk_sdio_write_own_cmd52(owntype, &cmd52Status);
-	if (ret) {
-		pr_warn("%s CMD52 own request failed, fallback to CMD53\n",
+	if (ret || (owntype == DRIVER_OWN && !(cmd52Status & BIT(0))) ||
+	    (owntype == FW_OWN && (cmd52Status & BIT(0)))) {
+		pr_warn("%s CMD52 own request incomplete, fallback to CMD53\n",
 			__func__);
 		ret = btmtk_sdio_writel(CHLPCR, ownValue);
 	}
@@ -1900,10 +1901,16 @@ static int btmtk_sdio_download_rom_patch(
 	u32 bufferOffset = 0;
 	u8  patch_status = 0;
 
+	pr_info("%s firmware candidates: /lib/firmware/%s, /lib/firmware/%s\n",
+		__func__, card->firmware, card->firmware1);
+
 	ret = btmtk_sdio_set_own_back(DRIVER_OWN);
 
-	if (ret)
+	if (ret) {
+		pr_err("%s Driver Own failed before request_firmware; no firmware file was requested\n",
+			__func__);
 		return ret;
+	}
 
 	patch_status = btmtk_sdio_need_load_rom_patch();
 
@@ -4721,12 +4728,10 @@ static void BTMTK_exit(void)
 	dev_t devIDfwlog = g_devIDfwlog;
 
 	pr_info("%s\n", __func__);
-	if (g_proc_dir != 0) {
-		g_proc_dir = 0;
-		remove_proc_entry("bt_fw_version", g_proc_dir);
-		remove_proc_entry("stpbt", NULL);
+	if (g_proc_dir) {
+		proc_remove(g_proc_dir);
+		g_proc_dir = NULL;
 		pr_info("proc device node and folder removed!!");
-		return;
 	}
 
 	if (g_card) {
@@ -4819,15 +4824,22 @@ static int btmtk_sdio_free_memory(void)
 
 static int __init btmtk_sdio_init_module(void)
 {
-	BTMTK_init();
+	int ret;
+
+	ret = BTMTK_init();
+	if (ret)
+		return ret;
 
 	if (btmtk_sdio_allocate_memory() < 0) {
 		pr_err("%s: allocate memory failed!", __func__);
+		BTMTK_exit();
 		return -ENOMEM;
 	}
 
 	if (sdio_register_driver(&bt_mtk_sdio) != 0) {
 		pr_err("SDIO Driver Registration Failed\n");
+		btmtk_sdio_free_memory();
+		BTMTK_exit();
 		return -ENODEV;
 	}
 #ifdef BT_SUPPORT_PMU_EN_CTRL
